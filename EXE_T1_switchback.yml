@@ -1,0 +1,22 @@
+---
+- name: EXE T1 Switchback
+  hosts: rhel
+  become: true
+
+  tasks:
+
+    - name: Stop httpd service
+      ansible.builtin.service:
+        name: httpd
+        state: stopped
+        enabled: false
+
+    - name: Verify httpd status
+      ansible.builtin.command: systemctl is-active httpd
+      register: httpd_status
+      changed_when: false
+      failed_when: false
+
+    - name: Display service status
+      ansible.builtin.debug:
+        msg: "HTTPD service is {{ httpd_status.stdout }}"

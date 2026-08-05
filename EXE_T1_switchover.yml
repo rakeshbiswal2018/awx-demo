@@ -1,0 +1,26 @@
+---
+- name: EXE T1 Switchover
+  hosts: rhel 
+  become: true
+
+  tasks:
+
+    - name: Ensure httpd package is installed
+      ansible.builtin.dnf:
+        name: httpd
+        state: present
+
+    - name: Start httpd service
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Verify httpd status
+      ansible.builtin.command: systemctl is-active httpd
+      register: httpd_status
+      changed_when: false
+
+    - name: Display service status
+      ansible.builtin.debug:
+        msg: "HTTPD service is {{ httpd_status.stdout }}"
