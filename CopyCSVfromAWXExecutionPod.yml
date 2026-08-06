@@ -1,0 +1,27 @@
+---
+- name: Copy CSV from AWX Execution Pod
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    - name: Get latest automation pod
+      shell: |
+        kubectl get pods -n awx --sort-by=.metadata.creationTimestamp \
+        | grep automation-job | tail -1 | awk '{print $1}'
+      register: pod
+
+    - name: Show pod
+      debug:
+        var: pod.stdout
+
+    - name: Create reports directory
+      file:
+        path: /root/awx-demo/reports
+        state: directory
+
+    - name: Copy CSV from pod
+      shell: |
+        kubectl cp \
+        awx/{{ pod.stdout }}:/runner/project/reports/jobs.csv \
+        /root/awx-demo/reports/jobs.csv
