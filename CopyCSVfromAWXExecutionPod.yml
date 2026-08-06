@@ -2,26 +2,52 @@
 - name: Copy CSV from AWX Execution Pod
   hosts: localhost
   gather_facts: false
+  connection: local
+
+  vars_files:
+    - vars.yml
 
   tasks:
 
-    - name: Get latest automation pod
-      shell: |
-        kubectl get pods -n awx --sort-by=.metadata.creationTimestamp \
-        | grep automation-job | tail -1 | awk '{print $1}'
+    - name: Get running jobs from AWX
+      ansible.builtin.uri:
+        url: "{{ awx_url }}/api/v2/jobs/?status=running"
+        method: GET
+        user: "{{ username }}"
+        password: "{{ password }}"
+        force_basic_auth: true
+        validate_certs: false
+        return_content: true
+      register: running_jobs
+
+    - name: Get Job ID of Get_All_AWX_Jobs_CSV
+      ansible.builtin.set_fact:
+        job_id: "{{ item.id }}"
+      loop: "{{ running_jobs.json.results }}"
+      when: item.name == "Get_All_AWX_Jobs_CSV"
+
+    - name: Display Job ID
+      ansible.builtin.debug:
+        msg: "Running Job ID = {{ job_id }}"
+
+    - name: Find execution pod
+      ansible.builtin.shell: |
+        kubectl get pods -n awx --no-headers | awk '/automation-job-{{ job_id }}-/ {print $1}'
       register: pod
 
-    - name: Show pod
-      debug:
-        var: pod.stdout
+    - name: Display execution pod
+      ansible.builtin.debug:
+        msg: "Execution Pod = {{ pod.stdout }}"
 
     - name: Create reports directory
-      file:
+      ansible.builtin.file:
         path: /root/awx-demo/reports
         state: directory
 
-    - name: Copy CSV from pod
-      shell: |
-        kubectl cp \
-        awx/{{ pod.stdout }}:/runner/project/reports/jobs.csv \
-        /root/awx-demo/reports/jobs.csv
+    - name: Copy CSV from execution pod
+      ansible.builtin.shell: |
+        kubectl cp awx/{{ pod.stdout }}:/runner/project/reports/jobs.csv /root/awx-demo/reports/jobs.csv
+
+    - name: Display report location
+      ansible.builtin.debug:
+        msg: "CSV copied successfully to /root/awx-demo/reports/jobs.csv"
