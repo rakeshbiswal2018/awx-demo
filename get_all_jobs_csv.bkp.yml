@@ -48,6 +48,14 @@
     - name: Verify injected username
       ansible.builtin.debug:
         msg: "Username received from AWX: {{ username }}"
+    - name: Show AWX/Tower environment variables
+      ansible.builtin.shell: |
+        env | sort | egrep 'AWX|TOWER|JOB|ANSIBLE'
+      register: env_output
+
+    - name: Display environment variables
+      ansible.builtin.debug:
+        var: env_output.stdout_lines
     - name: Show AWX Job ID
       ansible.builtin.debug:
         msg: "Job ID = {{ lookup('env', 'JOB_ID') }}"      
