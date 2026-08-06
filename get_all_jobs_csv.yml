@@ -1,0 +1,49 @@
+---
+- name: Get All AWX Jobs using Username and Password
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+
+    - name: Get all AWX jobs
+      ansible.builtin.uri:
+        url: "{{ awx_url }}/api/v2/jobs/"
+        method: GET
+        user: "{{ username }}"
+        password: "{{ password }}"
+        force_basic_auth: true
+        return_content: true
+        validate_certs: false
+      register: jobs
+
+    - name: Display total jobs
+      ansible.builtin.debug:
+        msg: "Total Jobs: {{ jobs.json.count }}"
+
+    - name: Create reports directory
+      ansible.builtin.file:
+        path: reports
+        state: directory
+
+    - name: Create CSV Header
+      ansible.builtin.copy:
+        dest: "{{ csv_file }}"
+        content: "JobID,Template,Status,Started,Finished,Elapsed\n"
+
+    - name: Append Job Details
+      ansible.builtin.lineinfile:
+        path: "{{ csv_file }}"
+        insertafter: EOF
+        line: "{{ item.id }},{{ item.name }},{{ item.status }},{{ item.started }},{{ item.finished }},{{ item.elapsed }}"
+      loop: "{{ jobs.json.results }}"
+
+    - name: Display CSV Location
+      ansible.builtin.debug:
+        msg: "CSV Report Generated Successfully : {{ csv_file }}"
+    - name: Verify injected username
+      ansible.builtin.debug:
+        msg: "Username received from AWX: {{ username }}"      

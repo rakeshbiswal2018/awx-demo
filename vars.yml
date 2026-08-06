@@ -1,0 +1,4 @@
+---
+awx_url: "http://192.168.22.1:32477"
+
+csv_file: "reports/jobs.csv"
