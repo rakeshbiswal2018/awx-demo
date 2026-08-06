@@ -44,17 +44,11 @@
     - name: Display CSV Location
       ansible.builtin.debug:
         msg: "CSV Report Generated Successfully : {{ csv_file }}"
+
     - name: Verify injected username
       ansible.builtin.debug:
-        msg: "Username received from AWX: {{ username }}"      
-      - name: Display CSV Location
-    ansible.builtin.debug:
-      msg: "CSV Report Generated Successfully : {{ csv_file }}"
+        msg: "Username received from AWX: {{ username }}"
 
-  - name: Verify injected username
-    ansible.builtin.debug:
-      msg: "Username received from AWX: {{ username }}"
-
-  - name: Pause for 5 minutes
-    ansible.builtin.pause:
-      minutes: 5      
+    - name: Pause for 5 minutes
+      ansible.builtin.pause:
+        minutes: 5
